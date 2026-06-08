@@ -1,9 +1,13 @@
+using System;
 using TMPro;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
 
 public class PlayerReplica : MonoBehaviour
 {
+    private const float WEAPON_RAY_DISTANCE = 300;
+
     private Player player;
     private Vector2 velocity;
     private Vector2 frameVelocity;   
@@ -14,7 +18,8 @@ public class PlayerReplica : MonoBehaviour
 
     [SerializeField] private Rigidbody rb;
     [SerializeField] private Camera headCameraToLower;
-    [SerializeField] GroundCheck groundCheck;
+    [SerializeField] private GroundCheck groundCheck;
+    [SerializeField] private Transform gunSlot;
 
     public bool IsRunning { get; private set; }
     public bool IsReplicaCrouched { get; private set; }
@@ -22,9 +27,13 @@ public class PlayerReplica : MonoBehaviour
     //Перенести в настройки
     [SerializeField] private float sensitivity = 2;
     [SerializeField] private float smoothing = 1.5f;
-    [SerializeField] private KeyCode crouchKey = KeyCode.LeftControl;
-    [SerializeField] private KeyCode jumpKey = KeyCode.Space;
-    [SerializeField] private KeyCode runningKey = KeyCode.LeftShift;
+
+    //Настройки вращения оружия
+    [SerializeField] private bool useMinDistance = true;
+    [SerializeField] private float minAimDistance = 2f;
+  
+    [SerializeField] private RectTransform crosshair;   
+    [SerializeField] private float maxDistance = 1000f;
 
     //Настройки приседания    
     private float? defaultHeadYLocalPosition; //дефолтная позиция камеры, в которую надо будет вернутся после выхода из приседания
@@ -32,12 +41,51 @@ public class PlayerReplica : MonoBehaviour
     private CapsuleCollider colliderToLower; // коллайдер, который уменьшиться в размере при преседании
     private float? defaultColliderHeight; // дефолтный размер коллайдера до приседания
 
+    public void Awake()
+    {
+        RectTransform crosshair = GameObject.Find("crosshair").GetComponent<RectTransform>();
+        if(crosshair != null )
+        {
+            this.crosshair = crosshair;
+        }
+        else
+        {
+            Debug.LogError("Сrosshair not exist");
+
+        }
+    }
+
     public void Init(Player player)
     {
         this.player = player;
+        this.player.onWeaponEquip += EquipWeapon;
+        this.player.onJump += MakeJump;
+        this.player.onStartCrouch += StartCrouch;
+        this.player.onStopCrouch += StopCrouch;
+        this.player.onStartRun += StartRun;
+        this.player.onStopRun += StopRun;
+
         Debug.Log($"Player Inited: {this.player.Name}");
     }
 
+    private void OnDestroy()
+    {
+        this.player.onWeaponEquip -= EquipWeapon;
+        this.player.onJump -= MakeJump;
+        this.player.onStartCrouch -= StartCrouch;
+        this.player.onStopCrouch -= StopCrouch;
+        this.player.onStartRun -= StartRun;
+        this.player.onStopRun -= StopRun;
+        this.player = null;
+    }
+
+    private void EquipWeapon(Weapon weapon)
+    {
+        GameObject loadedPrefab = Resources.Load<GameObject>($"Weapon/{weapon.name}");
+        GameObject weaponObj = GameObject.Instantiate(loadedPrefab, gunSlot);
+        WeaponReplica weaponReplica = weaponObj.GetComponent<WeaponReplica>();
+        weaponReplica.Init(weapon);
+    }
 
     private void Update()
     {
@@ -53,85 +101,92 @@ public class PlayerReplica : MonoBehaviour
             transform.localRotation = Quaternion.AngleAxis(velocity.x, Vector3.up);
         }
 
-        if (Input.GetKey(crouchKey))
+        Ray ray = headCameraToLower.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+
+        if (Physics.Raycast(ray, out RaycastHit hit, WEAPON_RAY_DISTANCE))
         {
-            ApplyCrouch(true);
-        }
-        else
-        {
-            ApplyCrouch(false);
+            Vector3 aimPoint = hit.point;
+            if (useMinDistance)
+            {
+                Vector3 cameraPos = headCameraToLower.transform.position;
+                if (Vector3.Distance(cameraPos, aimPoint) < minAimDistance)
+                {
+                    aimPoint = cameraPos + headCameraToLower.transform.forward * minAimDistance;
+                }
+            }
+            Vector3 dir = (aimPoint - gunSlot.position).normalized;
+            gunSlot.rotation = Quaternion.LookRotation(dir);
         }
 
-        if (Input.GetKey(runningKey))
+        if (crosshair != null)
         {
-            ApplyRun(true);
-        }
-        else
-        {
-            ApplyRun(false);
-        }
-        if (Input.GetKeyDown(jumpKey))
-        {
-            MakeJump();
+            Vector3 targetPoint;
+            Ray gunRay = new Ray(gunSlot.position, gunSlot.forward);
+            if (Physics.Raycast(gunRay, out RaycastHit gunHit, maxDistance))
+            {
+                targetPoint = gunHit.point;
+            }
+            else
+            {
+                targetPoint = gunRay.GetPoint(maxDistance);
+            }
+            Vector3 screenPos = headCameraToLower.WorldToScreenPoint(targetPoint);
+            crosshair.position = screenPos;
         }
     }
 
     private void FixedUpdate()
     {
-        if (player == null) return;   
-        float targetMovingSpeed = IsReplicaCrouched ? player.croachSpeed : (IsRunning ? player.runSpeed : player.normalSpeed);
-        
-        Vector2 targetVelocity = new Vector2(Input.GetAxis("Horizontal") * targetMovingSpeed, Input.GetAxis("Vertical") * targetMovingSpeed);
+        if (player == null) return;           
+        Vector2 targetVelocity = new Vector2(player.moveHorz, player.moveVert);
         rb.linearVelocity = transform.rotation * new Vector3(targetVelocity.x, rb.linearVelocity.y, targetVelocity.y);
     }
 
-    private void ApplyCrouch(bool cruched)
+    private void StartCrouch()
     {
-        if (cruched)//Команда сесеть
+        if (headCameraToLower != null)//Опускаем камеру
         {
-            if (headCameraToLower != null)//Опускаем камеру
-            {
-                if (!defaultHeadYLocalPosition.HasValue) defaultHeadYLocalPosition = headCameraToLower.transform.localPosition.y;
-                headCameraToLower.transform.localPosition = new Vector3(headCameraToLower.transform.localPosition.x, crouchYHeadPosition, headCameraToLower.transform.localPosition.z);
-            }
+            if (!defaultHeadYLocalPosition.HasValue) defaultHeadYLocalPosition = headCameraToLower.transform.localPosition.y;
+            headCameraToLower.transform.localPosition = new Vector3(headCameraToLower.transform.localPosition.x, crouchYHeadPosition, headCameraToLower.transform.localPosition.z);
+        }
 
-            if (colliderToLower != null)//Занижаем коллайдер
+        if (colliderToLower != null)//Занижаем коллайдер
+        {
+            if (!defaultColliderHeight.HasValue) defaultColliderHeight = colliderToLower.height;
+            float loweringAmount;
+            if (defaultHeadYLocalPosition.HasValue)
             {
-                if (!defaultColliderHeight.HasValue) defaultColliderHeight = colliderToLower.height;
-                float loweringAmount;
-                if (defaultHeadYLocalPosition.HasValue)
-                {
-                    loweringAmount = defaultHeadYLocalPosition.Value - crouchYHeadPosition;
-                }
-                else
-                {
-                    loweringAmount = defaultColliderHeight.Value * .5f;
-                }
-                colliderToLower.height = Mathf.Max(defaultColliderHeight.Value - loweringAmount, 0);
+                loweringAmount = defaultHeadYLocalPosition.Value - crouchYHeadPosition;
+            }
+            else
+            {
+                loweringAmount = defaultColliderHeight.Value * .5f;
+            }
+            colliderToLower.height = Mathf.Max(defaultColliderHeight.Value - loweringAmount, 0);
+            colliderToLower.center = Vector3.up * colliderToLower.height * .5f;
+        }
+        if (!IsReplicaCrouched)
+        {
+            IsReplicaCrouched = true;
+            onStartCrouch?.Invoke();
+        }                
+    }
+
+    private void StopCrouch()
+    {
+        if (IsReplicaCrouched)
+        {
+            if (headCameraToLower != null) //вовзвращаем камеру обратно
+            {
+                headCameraToLower.transform.localPosition = new Vector3(headCameraToLower.transform.localPosition.x, defaultHeadYLocalPosition.Value, headCameraToLower.transform.localPosition.z);
+            }
+            if (colliderToLower != null) //возвращаем коллайдер обратно
+            {
+                colliderToLower.height = defaultColliderHeight.Value;
                 colliderToLower.center = Vector3.up * colliderToLower.height * .5f;
             }
-            if (!IsReplicaCrouched)
-            {
-                IsReplicaCrouched = true;
-                onStartCrouch?.Invoke();
-            }
-        }
-        else//Команда встать
-        {
-            if (IsReplicaCrouched)
-            {
-                if (headCameraToLower != null) //вовзвращаем камеру обратно
-                {
-                    headCameraToLower.transform.localPosition = new Vector3(headCameraToLower.transform.localPosition.x, defaultHeadYLocalPosition.Value, headCameraToLower.transform.localPosition.z);
-                }
-                if (colliderToLower != null) //возвращаем коллайдер обратно
-                {
-                    colliderToLower.height = defaultColliderHeight.Value;
-                    colliderToLower.center = Vector3.up * colliderToLower.height * .5f;
-                }
-                IsReplicaCrouched = false;
-                onEndCrouch?.Invoke();
-            }
+            IsReplicaCrouched = false;
+            onEndCrouch?.Invoke();
         }
     }
 
@@ -143,11 +198,15 @@ public class PlayerReplica : MonoBehaviour
             rb.AddForce(Vector3.up * 100 * str);
             onJump?.Invoke();
         }
-        
     }
 
-    private void ApplyRun(bool newValue)
+    private void StartRun()
     {
-        IsRunning = newValue;
+        IsRunning = true;
+    }
+
+    private void StopRun()
+    {
+        IsRunning = false;
     }
 }

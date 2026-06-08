@@ -7,7 +7,8 @@ public class Player : Target
     private static readonly Random rnd = new Random();
 
     public string Name;
-    
+    public float moveHorz;
+    public float moveVert;
 
     public Player(int id)
     {
@@ -24,4 +25,14 @@ public class Player : Target
         return $"{part1} {part2}";
     }
 
+    internal void Move(float horz, float vert)
+    {
+        float targetMovingSpeed = isCrouch ? croachSpeed : (isRun ? runSpeed : normalSpeed);
+
+        if (canWalk)
+        {
+            moveHorz = horz * targetMovingSpeed;
+            moveVert = vert * targetMovingSpeed;
+        }
+    }
 }
