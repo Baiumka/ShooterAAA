@@ -7,14 +7,12 @@ using UnityEngine;
 public class PlayerReplica : TargetReplica
 {
     private const float WEAPON_RAY_DISTANCE = 300;
-
     private Player player;
     
 
     private Vector2 velocity;
     private Vector2 frameVelocity;
-
-
+    
     private RectTransform crosshair;
     protected override Target target { get => player; }
     [SerializeField] private Camera headCameraToLower;
@@ -26,7 +24,7 @@ public class PlayerReplica : TargetReplica
 
     public void Awake()
     {
-        RectTransform crosshair = GameObject.Find("crosshair").GetComponent<RectTransform>();
+        RectTransform crosshair = GameObject.Find("CrosshairPoint").GetComponent<RectTransform>();
         if(crosshair != null )
         {
             this.crosshair = crosshair;
@@ -96,19 +94,12 @@ public class PlayerReplica : TargetReplica
             }
 
             if (crosshair != null)
-            {
-                Vector3 targetPoint;
-                Ray gunRay = new Ray(gunSlot.position, gunSlot.forward);
-                if (Physics.Raycast(gunRay, out RaycastHit gunHit, maxDistance))
+            {                
+                if(weaponReplica != null)
                 {
-                    targetPoint = gunHit.point;
-                }
-                else
-                {
-                    targetPoint = gunRay.GetPoint(maxDistance);
-                }
-                Vector3 screenPos = headCameraToLower.WorldToScreenPoint(targetPoint);
-                crosshair.position = screenPos;
+                    Vector3 screenPos = headCameraToLower.WorldToScreenPoint(weaponReplica.targetPoint);
+                    crosshair.position = screenPos;
+                }                
             }
         }        
     }

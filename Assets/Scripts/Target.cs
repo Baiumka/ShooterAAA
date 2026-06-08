@@ -73,4 +73,9 @@ public abstract class Target
     {
         onJump?.Invoke();
     }
+
+    internal void DoShot()
+    {
+        weapon.Shot();
+    }
 }

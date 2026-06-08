@@ -6,8 +6,15 @@ public class Spawner : MonoBehaviour
     [SerializeField] private GameObject playerPrefab;
 
     private void Awake()
-    {           
-        Instance = this;           
+    {         
+        if(Instance != null) Destroy(Instance);
+        Instance = this;
+        GameController.instance.onPlayerSpawned += SpawnPlayer;
+    }
+
+    private void OnDestroy()
+    {
+        GameController.instance.onPlayerSpawned -= SpawnPlayer;
     }
 
     public void SpawnPlayer(Player player)

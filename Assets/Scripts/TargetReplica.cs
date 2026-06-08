@@ -8,6 +8,7 @@ public abstract class TargetReplica : MonoBehaviour
     public VoidHandler onJump;
 
     protected virtual Target target { get; }
+    protected WeaponReplica weaponReplica;
 
     [SerializeField] protected Rigidbody rb;    
     [SerializeField] protected GroundCheck groundCheck;
@@ -34,6 +35,8 @@ public abstract class TargetReplica : MonoBehaviour
         GameObject weaponObj = GameObject.Instantiate(loadedPrefab, gunSlot);
         WeaponReplica weaponReplica = weaponObj.GetComponent<WeaponReplica>();
         weaponReplica.Init(weapon);
+
+        this.weaponReplica = weaponReplica;
     }
 
     protected void Update()
