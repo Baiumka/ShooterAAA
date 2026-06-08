@@ -1,3 +1,5 @@
+using System;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class Weapon 
@@ -11,8 +13,13 @@ public class Weapon
     public bool auto;
     public float maxDistance;
     public float buleltSpeed;
+    public int reloadDelay;
+
+    public bool isReload;
 
     public VoidHandler onShot;
+    public VoidHandler onStartLoad;
+    public VoidHandler onEndLoad;
 
     public Weapon(WeaponName name, int ammo, int maxAmmo, float delay, bool auto)
     {
@@ -23,10 +30,13 @@ public class Weapon
         this.name = name;
         this.maxDistance = 1000;
         this.buleltSpeed = 15;
+        this.reloadDelay = 2000;
     }
 
     public bool Shot()
     {
+        if (isReload) return false;
+
         if (ammo > 0)
         {
             ammo--;
@@ -39,8 +49,20 @@ public class Weapon
         }
     }
 
-    public void Reload()
+    public async void Reload()
     {
+        await ReloadAsync();
+    }
+
+    public async Task ReloadAsync()
+    {
+        if (isReload || ammo == maxAmmo)
+            return;
+        isReload = true;
+        onStartLoad?.Invoke();
+        await Task.Delay(reloadDelay);
         ammo = maxAmmo;
+        isReload = false;
+        onEndLoad?.Invoke();
     }
 }

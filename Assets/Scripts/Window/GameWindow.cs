@@ -9,6 +9,7 @@ public class GameWindow : Window
     [SerializeField] private TMP_Text healthTMP;
     [SerializeField] private TMP_Text weaponNameTMP;
     [SerializeField] private TMP_Text weaponAmmoTMP;
+    [SerializeField] private TMP_Text ReloadingTMP;
 
     private new void Start()
     {
@@ -16,11 +17,40 @@ public class GameWindow : Window
         GameController.instance.onPlayerSpawned += InitPlayer;
     }
 
+    private new void OnDestroy()
+    {
+        base.OnDestroy();
+        GameController.instance.onPlayerSpawned -= InitPlayer;
+        if(player != null )
+        {
+            if(player.weapon != null)
+            {
+                player.weapon.onStartLoad -= StartReload;
+                player.weapon.onEndLoad -= EndReload;
+            }
+        }
+    }
+
     private void InitPlayer(Player player)
     {
         this.player = player;
         nicknameTMP.text = player.Name;
         healthTMP.text = $"{player.Health}/{player.MaxHealth}";
+        if (player.weapon != null)
+        {
+            player.weapon.onStartLoad -= StartReload;
+            player.weapon.onEndLoad -= EndReload ;
+        }
+    }
+
+    private void EndReload()
+    {
+       // throw new NotImplementedException();
+    }
+
+    private void StartReload()
+    {
+       // throw new NotImplementedException();
     }
 
     private void Update()
@@ -31,6 +61,7 @@ public class GameWindow : Window
             {
                 weaponNameTMP.text = player.weapon.name.ToString();
                 weaponAmmoTMP.text = $"{player.weapon.ammo}/{player.weapon.maxAmmo}";
+                ReloadingTMP.gameObject.SetActive(player.weapon.isReload);
             }
         }
     }

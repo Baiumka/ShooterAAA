@@ -74,8 +74,14 @@ public abstract class Target
         onJump?.Invoke();
     }
 
-    internal void DoShot()
+    public void DoShot()
     {
         weapon.Shot();
+    }
+
+    public void ReloadWeapon()
+    {
+        if (weapon == null) return;
+        weapon.Reload();
     }
 }

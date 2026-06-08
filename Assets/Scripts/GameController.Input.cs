@@ -9,6 +9,7 @@ public partial class GameController
     [SerializeField] private KeyCode crouchKey = KeyCode.LeftControl;
     [SerializeField] private KeyCode jumpKey = KeyCode.Space;
     [SerializeField] private KeyCode runKey = KeyCode.LeftShift;
+    [SerializeField] private KeyCode reloadKey = KeyCode.R;
 
 
     private void Update()
@@ -42,6 +43,11 @@ public partial class GameController
         if (Input.GetKeyDown(jumpKey))
         {
             player.MakeJump();
+        }
+
+        if (Input.GetKeyDown(reloadKey))
+        {
+            player.ReloadWeapon();
         }
 
         if (Input.GetMouseButtonDown(0))
