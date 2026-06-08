@@ -6,10 +6,8 @@ public class Player : Target
     private static readonly string[] name2 = { "Tiger", "Worm", "Cat", "Dog", "Bear", "Monkey", "Dragon", "Rat" };
     private static readonly Random rnd = new Random();
 
-    public string Name;
-    public float moveHorz;
-    public float moveVert;
-
+    public string Name { get; private set; }
+    public Vec2 MouseDelta { get; private set; }
     public Player(int id)
     {
         Id = id;
@@ -25,14 +23,13 @@ public class Player : Target
         return $"{part1} {part2}";
     }
 
-    internal void Move(float horz, float vert)
+    internal void Move(Vec2 input)
     {
-        float targetMovingSpeed = isCrouch ? croachSpeed : (isRun ? runSpeed : normalSpeed);
+        InputMove = input;
+    }
 
-        if (canWalk)
-        {
-            moveHorz = horz * targetMovingSpeed;
-            moveVert = vert * targetMovingSpeed;
-        }
+    internal void MoveCamera(Vec2 mouseDelta)
+    {
+        MouseDelta = mouseDelta;
     }
 }

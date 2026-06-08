@@ -17,6 +17,7 @@ public abstract class Target
     public bool isCrouch;
     public bool canWalk = true;
     public bool IsAlive => Health > 0;
+    public Vec2 InputMove { get; protected set; }
 
     public WeaponHandler onWeaponEquip;
     public WeaponHandler onWeaponDrop;

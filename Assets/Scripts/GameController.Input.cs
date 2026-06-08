@@ -1,5 +1,5 @@
+using System;
 using UnityEngine;
-using static Unity.Collections.Unicode;
 
 public partial class GameController 
 {
@@ -15,6 +15,14 @@ public partial class GameController
 
         HandleMovementInput();
         HandleActionInput();
+        HandleMouseMovementInput();
+    }
+
+    private void HandleMouseMovementInput()
+    {
+        if (player == null) return;
+        Vec2 mouseDelta = new Vec2(Input.GetAxisRaw("Mouse X"), Input.GetAxisRaw("Mouse Y"));
+        player.MoveCamera(mouseDelta);
     }
 
     private void HandleMovementInput()
@@ -37,6 +45,8 @@ public partial class GameController
     private void FixedUpdate()
     {
         if (player == null) return;
-        player.Move(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
+        Vec2 input = new Vec2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
+        player.Move(input);
     }
+    
 }
