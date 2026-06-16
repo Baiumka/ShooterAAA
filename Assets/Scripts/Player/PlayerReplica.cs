@@ -17,13 +17,14 @@ public class PlayerReplica : TargetReplica
     protected override Target target { get => player; }
     [SerializeField] private Camera headCameraToLower;
 
-    //Перенести в настройки
+    //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     [SerializeField] private float sensitivity = 2;
     [SerializeField] private float smoothing = 1.5f;
         
 
-    public void Awake()
+    public new void Awake()
     {
+        base.Awake();
         RectTransform crosshair = GameObject.Find("CrosshairPoint").GetComponent<RectTransform>();
         if(crosshair != null )
         {
@@ -31,7 +32,7 @@ public class PlayerReplica : TargetReplica
         }
         else
         {
-            Debug.LogError("Сrosshair not exist");
+            Debug.LogError("пїЅrosshair not exist");
 
         }
     }
@@ -39,7 +40,7 @@ public class PlayerReplica : TargetReplica
     public void Init(Player player)
     {
         this.player = player;
-        this.player.onWeaponEquip += EquipWeapon;
+        base.Init(player);           
         this.player.onJump += MakeJump;
         this.player.onStartCrouch += StartCrouch;
         this.player.onStopCrouch += StopCrouch;
@@ -49,9 +50,9 @@ public class PlayerReplica : TargetReplica
         Debug.Log($"Player Inited: {this.player.Name}");
     }
 
-    private void OnDestroy()
+    private new void OnDestroy()
     {
-        this.player.onWeaponEquip -= EquipWeapon;
+        base.OnDestroy();      
         this.player.onJump -= MakeJump;
         this.player.onStartCrouch -= StartCrouch;
         this.player.onStopCrouch -= StopCrouch;
@@ -99,11 +100,29 @@ public class PlayerReplica : TargetReplica
                 {
                     Vector3 screenPos = headCameraToLower.WorldToScreenPoint(weaponReplica.targetPoint);
                     crosshair.position = screenPos;
+
+                    if (ReferenceEquals(weaponReplica.foundTarget, weaponReplica.currentTarget))
+                        return;
+                    weaponReplica.currentTarget?.SetHighlighted(false);
+                    weaponReplica.currentTarget = weaponReplica.foundTarget;
+                    weaponReplica.currentTarget?.SetHighlighted(true);
                 }                
             }
         }        
     }
-    
+
+    private ITargetable FindTarget()
+    {
+        Ray ray = GetComponent<Camera>().ViewportPointToRay(new Vector3(0.5f, 0.5f));
+
+        if (Physics.Raycast(ray, out RaycastHit hit, maxDistance))
+        {
+            return hit.collider.GetComponentInParent<ITargetable>();
+        }
+
+        return null;
+    }
+
 
     protected override void DownCamera() 
     {
@@ -112,7 +131,7 @@ public class PlayerReplica : TargetReplica
     }
     protected override void UpCamera()
     {
-        if (headCameraToLower != null) //вовзвращаем камеру обратно
+        if (headCameraToLower != null) //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         {
             headCameraToLower.transform.localPosition = new Vector3(headCameraToLower.transform.localPosition.x, defaultHeadYLocalPosition.Value, headCameraToLower.transform.localPosition.z);
         }

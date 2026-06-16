@@ -1,7 +1,15 @@
 using System;
+using System.Xml.Linq;
+using Unity.VisualScripting;
 
 public abstract class Target
 {
+    protected static readonly string[] name1 = { "Red", "Blue", "Green", "Yellow", "Brown", "Black", "Gray", "Purple" };
+    protected static readonly string[] name2 = { "Tiger", "Worm", "Cat", "Dog", "Bear", "Monkey", "Dragon", "Rat" };
+    protected static readonly Random rnd = new Random();
+
+    public string Name { get; protected set; }
+
     public int Id;
     public int Health;
     public int MaxHealth;
@@ -27,6 +35,13 @@ public abstract class Target
     public VoidHandler onStartRun;
     public VoidHandler onStopRun;
     public VoidHandler onJump;
+
+    protected static string GenerateName()
+    {
+        string part1 = name1[rnd.Next(name1.Length)];
+        string part2 = name2[rnd.Next(name2.Length)];
+        return $"{part1} {part2}";
+    }
 
     public void GiveWeapon(Weapon weapon)
     {

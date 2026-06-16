@@ -5,8 +5,11 @@ public class WeaponReplica : MonoBehaviour
 {
     private Weapon weapon;
     public Vector3 targetPoint;
+    public ITargetable currentTarget;
+    public ITargetable foundTarget;
     [SerializeField] private Transform weaponMuzle;
     [SerializeField] private LayerMask hitMask;
+
     public void Init(Weapon weapon)
     {
         this.weapon = weapon;
@@ -35,11 +38,14 @@ public class WeaponReplica : MonoBehaviour
             if (Physics.Raycast(gunRay, out RaycastHit gunHit, weapon.maxDistance, hitMask))
             {
                 targetPoint = gunHit.point;
+                foundTarget = gunHit.collider.GetComponentInParent<ITargetable>();
             }
             else
             {
                 targetPoint = gunRay.GetPoint(weapon.maxDistance);
+                foundTarget = null;
             }
+            
         }
     }
 

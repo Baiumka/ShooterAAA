@@ -6,13 +6,14 @@ using UnityEngine;
 
 public partial class GameController : MonoBehaviour
 {
-    public static GameController instance;
+    public static GameController instance;    
     private GameManager gameManager;
     private Player player;
 
     public VoidHandler onSceneStartLoading;
     public VoidHandler onSceneLoaded;
     public PlayerHandler onPlayerSpawned;
+    public EnemyHandler onEnemySpawned;
     public ProgressHandler onSceneProgressUpdated;
 
     [SerializeField] private SceneLoader loader;
@@ -26,6 +27,7 @@ public partial class GameController : MonoBehaviour
             gameManager = new GameManager();
             gameManager.GenerateWeapons();
             gameManager.onPlayerSpawned += SpawnPlayer;
+            gameManager.onEnemySpawned += SpawnEnemy;
             if (loader != null)
             {
                 loader.OnStartedLoadScene += LoadingSceneStarted;
@@ -39,6 +41,27 @@ public partial class GameController : MonoBehaviour
         }
     }
 
+    private void OnDestroy()
+    {
+        if (gameManager != null)
+        {
+            gameManager.onPlayerSpawned -= SpawnPlayer;
+            gameManager.onEnemySpawned -= SpawnEnemy;
+            gameManager = null;
+        }
+        if (loader != null)
+        {
+            loader.OnStartedLoadScene -= LoadingSceneStarted;
+            loader.OnEndedLoadScene -= LoadingSceneEnded;
+            loader.OnProgressUpdated -= UpdateSceneProgress;
+        }
+    }
+
+    private void SpawnEnemy(Enemy enemy)
+    {
+        onEnemySpawned?.Invoke(enemy);
+    }
+
     private void Start()
     {
         StartCoroutine(FirstLoad());
@@ -50,20 +73,7 @@ public partial class GameController : MonoBehaviour
         EndLoadScene(loader.CurrentScene);
     }
 
-    private void OnDestroy()
-    {
-        if (gameManager != null)
-        {
-            gameManager.onPlayerSpawned -= SpawnPlayer;
-            gameManager = null;
-        }
-        if (loader != null)
-        {
-            loader.OnStartedLoadScene -= LoadingSceneStarted;
-            loader.OnEndedLoadScene -= LoadingSceneEnded;
-            loader.OnProgressUpdated -= UpdateSceneProgress;
-        }
-    }
+   
 
     private void LoadingSceneStarted(Scene newScene)
     {        
@@ -101,11 +111,21 @@ public partial class GameController : MonoBehaviour
         Cursor.visible = false;
 
         gameManager.SpawnPlayer();
+        gameManager.SpawnEnemies(5);
+
     }
 
     public void StartLoadGame()
     {
         loader.LoadScene(Scene.SIMPLE_SCENE);
+    }
+
+    private void OnGUI()
+    {
+        if(GUI.Button(new Rect(0, Screen.height/2, 150, 15), "Spawn Enemy"))
+        {
+            gameManager.SpawnEnemies(1);
+        }
     }
 
 

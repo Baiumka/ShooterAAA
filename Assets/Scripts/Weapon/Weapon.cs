@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using UnityEngine;
+using static UnityEngine.Android.AndroidGame;
 
 public class Weapon 
 {
@@ -64,5 +65,10 @@ public class Weapon
         ammo = maxAmmo;
         isReload = false;
         onEndLoad?.Invoke();
+    }
+
+    public Weapon Clone()
+    {
+        return new Weapon(name, ammo, maxAmmo, delay, auto);
     }
 }

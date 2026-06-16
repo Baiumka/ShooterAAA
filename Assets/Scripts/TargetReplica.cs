@@ -29,6 +29,21 @@ public abstract class TargetReplica : MonoBehaviour
     public bool IsRunning { get; protected set; }
     public bool IsReplicaCrouched { get; protected set; }
 
+    protected void Awake()
+    {
+        
+    }
+
+    protected void Init(Target target)
+    {
+        target.onWeaponEquip += EquipWeapon;
+    }
+
+    protected void OnDestroy()
+    {
+        target.onWeaponEquip -= EquipWeapon;
+    }
+
     protected void EquipWeapon(Weapon weapon)
     {
         GameObject loadedPrefab = Resources.Load<GameObject>($"Weapon/{weapon.name}");

@@ -10,9 +10,7 @@ public delegate void ProgressHandler(float progress);
 
 public class SceneLoader : MonoBehaviour
 {
-    public const float SCENE_SWITCH_DURATION = 0.5f;
-
-    private static SceneLoader instance;
+    public const float SCENE_SWITCH_DURATION = 0.5f;    
     public StartSceneLoaderHandler OnStartedLoadScene;
     public EndSceneLoaderHandler OnEndedLoadScene;
     public ProgressHandler OnProgressUpdated;
@@ -23,16 +21,7 @@ public class SceneLoader : MonoBehaviour
 
     private void Awake()
     {
-        currentScene = Enum.Parse<Scene>(SceneManager.GetActiveScene().name);
-        if (instance == null)
-        {
-            instance = this;
-            DontDestroyOnLoad(this);
-        }
-        else
-        {
-            Destroy(this.gameObject);
-        }        
+        currentScene = Enum.Parse<Scene>(SceneManager.GetActiveScene().name);      
     }
 
     private void Start()
