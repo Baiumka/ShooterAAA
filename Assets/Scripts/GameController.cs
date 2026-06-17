@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -110,8 +111,31 @@ public partial class GameController : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
+        List<SpawnPoint> points =
+            FindObjectsByType<SpawnPoint>(FindObjectsSortMode.None)
+            .OrderBy(e => e.Id)
+            .ToList();
+
+        List<Vec3> enemyPoints = new List<Vec3>();
+        Vec3? playerPoint = null;
+
+        foreach(SpawnPoint point in points)
+        {
+            if(point.Type == SpawnType.ENEMY_SPAWN)
+            {
+                enemyPoints.Add(point.Vec);
+            }
+            else if (point.Type == SpawnType.PLAYER_SPAWN)
+            {
+                playerPoint = point.Vec;
+            }
+        }
+
+        gameManager.GenerateEnemySpawnPoints(enemyPoints);
+        gameManager.GeneratePlayerSpawnPoint(playerPoint);
+
         gameManager.SpawnPlayer();
-        gameManager.SpawnEnemies(5);
+        gameManager.SpawnEnemies(2);
 
     }
 

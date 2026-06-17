@@ -1,8 +1,11 @@
+using Unity.IO.LowLevel.Unsafe;
 using UnityEditor;
 using UnityEngine;
 
-public abstract class TargetReplica : MonoBehaviour
+public abstract class TargetReplica : MonoBehaviour, ITargetable
 {
+    protected const float WEAPON_RAY_DISTANCE = 300;
+
     public VoidHandler onStartCrouch;
     public VoidHandler onEndCrouch;
     public VoidHandler onJump;
@@ -11,7 +14,7 @@ public abstract class TargetReplica : MonoBehaviour
     protected WeaponReplica weaponReplica;
 
     [SerializeField] protected Rigidbody rb;    
-    [SerializeField] protected GroundCheck groundCheck;
+    [SerializeField] private GroundCheck groundCheck;
     [SerializeField] protected Transform gunSlot;
 
     //Настройки вращения оружия
@@ -56,7 +59,7 @@ public abstract class TargetReplica : MonoBehaviour
 
     protected void Update()
     {
-        //
+        WeaponDirectionUpdate();
     }
 
     private void FixedUpdate()
@@ -70,6 +73,32 @@ public abstract class TargetReplica : MonoBehaviour
         }
 
     }
+
+    protected virtual Ray GetForwardRay()
+    {
+        return new Ray(transform.position, transform.forward);
+    }
+
+    private void WeaponDirectionUpdate()
+    {
+
+        Ray ray = GetForwardRay();
+
+        if (Physics.Raycast(ray, out RaycastHit hit, WEAPON_RAY_DISTANCE))
+        {
+            Vector3 aimPoint = hit.point;
+            if (useMinDistance)
+            {
+                Vector3 cameraPos = transform.position;
+                if (Vector3.Distance(cameraPos, aimPoint) < minAimDistance)
+                {
+                    aimPoint = cameraPos + transform.forward * minAimDistance;
+                }
+            }
+            Vector3 dir = (aimPoint - gunSlot.position).normalized;
+            gunSlot.rotation = Quaternion.LookRotation(dir);
+        }
+    } 
 
     protected void StartCrouch()
     {
@@ -136,5 +165,15 @@ public abstract class TargetReplica : MonoBehaviour
     protected void StopRun()
     {
         IsRunning = false;
+    }
+
+    public void SetHighlighted(bool state)
+    {
+        
+    }
+
+    public virtual void TakeDamage(int hp)
+    {
+        target.TakeDamage(hp);
     }
 }

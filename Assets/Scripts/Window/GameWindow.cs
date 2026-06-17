@@ -57,6 +57,7 @@ public class GameWindow : Window
     {
         if (this.player != null)
         {
+            healthTMP.text = $"{player.Health}/{player.MaxHealth}";
             if (player.weapon != null)
             {
                 weaponNameTMP.text = player.weapon.name.ToString();

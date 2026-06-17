@@ -1,11 +1,12 @@
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using UnityEngine;
 using static UnityEngine.Android.AndroidGame;
 
 public class Weapon 
 {
-   
+    private Stopwatch shotTimer = Stopwatch.StartNew();
 
     public WeaponName name;
     public int ammo;
@@ -38,16 +39,19 @@ public class Weapon
     {
         if (isReload) return false;
 
+        if (shotTimer.Elapsed.TotalSeconds < delay)
+            return false;
+
         if (ammo > 0)
         {
             ammo--;
+            shotTimer.Restart();
+
             onShot?.Invoke();
             return true;
         }
-        else
-        {
-            return false;
-        }
+
+        return false;
     }
 
     public async void Reload()

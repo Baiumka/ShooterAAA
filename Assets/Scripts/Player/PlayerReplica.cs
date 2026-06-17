@@ -4,9 +4,8 @@ using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
 
-public class PlayerReplica : TargetReplica
-{
-    private const float WEAPON_RAY_DISTANCE = 300;
+public class PlayerReplica : TargetReplica, ITargetable
+{    
     private Player player;
     
 
@@ -14,13 +13,13 @@ public class PlayerReplica : TargetReplica
     private Vector2 frameVelocity;
     
     private RectTransform crosshair;
-    protected override Target target { get => player; }
-    [SerializeField] private Camera headCameraToLower;
 
-    //��������� � ���������
+    [SerializeField] private Camera headCameraToLower;    
     [SerializeField] private float sensitivity = 2;
     [SerializeField] private float smoothing = 1.5f;
-        
+
+    protected override Target target { get => player; }
+    public Vector3 Position { get => transform.position; }
 
     public new void Awake()
     {
@@ -65,7 +64,7 @@ public class PlayerReplica : TargetReplica
 
     private new void Update()
     {
-        base.Update();
+        base.Update();        
         if (headCameraToLower != null)
         {
             Vector2 mouseDelta = new Vector2(player.MouseDelta.x, player.MouseDelta.y);   
@@ -75,24 +74,7 @@ public class PlayerReplica : TargetReplica
             velocity.y = Mathf.Clamp(velocity.y, -90, 90);
 
             headCameraToLower.transform.localRotation = Quaternion.AngleAxis(-velocity.y, Vector3.right);
-            transform.localRotation = Quaternion.AngleAxis(velocity.x, Vector3.up);
-
-            Ray ray = headCameraToLower.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-
-            if (Physics.Raycast(ray, out RaycastHit hit, WEAPON_RAY_DISTANCE))
-            {
-                Vector3 aimPoint = hit.point;
-                if (useMinDistance)
-                {
-                    Vector3 cameraPos = headCameraToLower.transform.position;
-                    if (Vector3.Distance(cameraPos, aimPoint) < minAimDistance)
-                    {
-                        aimPoint = cameraPos + headCameraToLower.transform.forward * minAimDistance;
-                    }
-                }
-                Vector3 dir = (aimPoint - gunSlot.position).normalized;
-                gunSlot.rotation = Quaternion.LookRotation(dir);
-            }
+            transform.localRotation = Quaternion.AngleAxis(velocity.x, Vector3.up);                        
 
             if (crosshair != null)
             {                
@@ -111,16 +93,17 @@ public class PlayerReplica : TargetReplica
         }        
     }
 
-    private ITargetable FindTarget()
+    protected override Ray GetForwardRay()
     {
-        Ray ray = GetComponent<Camera>().ViewportPointToRay(new Vector3(0.5f, 0.5f));
+        return headCameraToLower.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+    }
 
-        if (Physics.Raycast(ray, out RaycastHit hit, maxDistance))
-        {
-            return hit.collider.GetComponentInParent<ITargetable>();
-        }
 
-        return null;
+    public new void TakeDamage(int hp)
+    {
+        Debug.Log($"{player.Name} take damage");
+        base.TakeDamage(hp);
+
     }
 
 
@@ -131,7 +114,7 @@ public class PlayerReplica : TargetReplica
     }
     protected override void UpCamera()
     {
-        if (headCameraToLower != null) //����������� ������ �������
+        if (headCameraToLower != null) 
         {
             headCameraToLower.transform.localPosition = new Vector3(headCameraToLower.transform.localPosition.x, defaultHeadYLocalPosition.Value, headCameraToLower.transform.localPosition.z);
         }

@@ -247,14 +247,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rb: {fileID: 8143073387156212471}
-  headCameraToLower: {fileID: 649285740377398753}
   groundCheck: {fileID: 4826322922236064197}
   gunSlot: {fileID: 2163353942689437406}
+  useMinDistance: 1
+  minAimDistance: 2
+  maxDistance: 1000
+  headCameraToLower: {fileID: 649285740377398753}
   sensitivity: 2
   smoothing: 1.5
-  crouchKey: 306
-  jumpKey: 32
-  runningKey: 304
 --- !u!1 &2726108027386786688
 GameObject:
   m_ObjectHideFlags: 0
@@ -280,7 +280,7 @@ Transform:
   m_GameObject: {fileID: 2726108027386786688}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.5400009, y: -0.097, z: 1.1239964}
+  m_LocalPosition: {x: 0.416, y: -0.495, z: 0.498}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

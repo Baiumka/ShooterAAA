@@ -5,6 +5,7 @@ using UnityEngine;
 
 public partial class GameController 
 {
+    private bool isEsc;
     //Перенести в настройки
     [SerializeField] private KeyCode crouchKey = KeyCode.LeftControl;
     [SerializeField] private KeyCode jumpKey = KeyCode.Space;
@@ -53,6 +54,13 @@ public partial class GameController
         if (Input.GetMouseButtonDown(0))
         {
             player.DoShot();
+        }
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            isEsc = !isEsc;
+            Cursor.lockState = CursorLockMode.Confined;
+            Cursor.visible = isEsc;
         }
     }
 
